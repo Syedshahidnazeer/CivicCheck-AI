@@ -3,3 +3,7 @@ google-generativeai
 python-dotenv
 xhtml2pdf
 markdown2
+libcairo2-dev
+pkg-config
+libpango1.0-dev
+libgdk-pixbuf2.0-dev
