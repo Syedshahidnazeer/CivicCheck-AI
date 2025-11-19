@@ -1,148 +1,161 @@
-from xhtml2pdf import pisa
+from weasyprint import HTML, CSS
 import markdown2
 from io import BytesIO
 import datetime
 
 def create_styled_pdf(markdown_content):
     """
-    Converts Markdown text into a professional PDF using xhtml2pdf.
-    
-    Args:
-        markdown_content (str): The raw markdown text from the AI.
-        
-    Returns:
-        bytes: The PDF file data, or None if generation fails.
+    Converts Markdown text into a professional PDF using WeasyPrint.
+    Supports modern CSS3 and consistent styling.
     """
     
     # 1. Convert Markdown to HTML
-    # We enable 'tables' to ensure AI table outputs look good
     try:
-        html_content = markdown2.markdown(
+        html_body = markdown2.markdown(
             markdown_content, 
             extras=["tables", "fenced-code-blocks", "break-on-newline"]
         )
     except Exception as e:
-        # Fallback if markdown conversion fails
-        html_content = f"<p>Error processing content: {str(e)}</p>"
+        html_body = f"<p>Error processing content: {str(e)}</p>"
 
-    # 2. Define CSS Styles
-    # We use a Python string for CSS to avoid f-string formatting conflicts with CSS braces {}
+    # 2. Define Professional CSS
+    # WeasyPrint allows @page rules for headers/footers
     current_date = datetime.datetime.now().strftime("%B %d, %Y")
     
-    css_styles = """
-    <style>
-        @page {
-            size: A4;
-            margin: 2cm;
-        }
-        body {
-            font-family: Helvetica, sans-serif;
-            font-size: 11pt;
-            line-height: 1.5;
-            color: #333333;
-        }
-        
-        /* Header Section */
-        .header {
-            border-bottom: 2px solid #1E3A8A;
-            padding-bottom: 10px;
-            margin-bottom: 25px;
-        }
-        .title {
-            color: #1E3A8A;
-            font-size: 18pt;
-            font-weight: bold;
-        }
-        .meta {
-            color: #666666;
-            font-size: 10pt;
-            margin-top: 5px;
-        }
-        
-        /* Content Styling */
-        h1 {
-            color: #1E3A8A;
-            font-size: 16pt;
-            border-bottom: 1px solid #E5E7EB;
-            padding-bottom: 5px;
-            margin-top: 20px;
-            margin-bottom: 15px;
-        }
-        h2 {
-            color: #1E3A8A;
-            font-size: 14pt;
-            margin-top: 15px;
-            margin-bottom: 10px;
-        }
-        h3 {
-            color: #2563EB;
-            font-size: 12pt;
-            font-weight: bold;
-            margin-top: 10px;
-        }
-        p {
-            margin-bottom: 10px;
-        }
-        
-        /* Tables */
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 15px 0;
-        }
-        th {
-            background-color: #F3F4F6;
-            color: #111111;
-            font-weight: bold;
-            padding: 8px;
-            border: 1px solid #D1D5DB;
-            text-align: left;
-        }
-        td {
-            padding: 8px;
-            border: 1px solid #D1D5DB;
-        }
-        
-        /* Lists */
-        ul { margin-bottom: 10px; padding-left: 20px; }
-        li { margin-bottom: 5px; }
-        
-        /* Disclaimer Footer */
-        .disclaimer {
-            margin-top: 40px;
-            padding: 15px;
-            background-color: #FEF2F2;
-            border: 1px solid #F87171;
-            color: #991B1B;
+    css_string = """
+    @page {
+        size: A4;
+        margin: 2.5cm 2cm;
+        @bottom-right {
+            content: "Page " counter(page);
+            font-family: 'Helvetica', sans-serif;
             font-size: 9pt;
-            text-align: justify;
+            color: #666;
         }
-    </style>
+        @bottom-left {
+            content: "CivicCheck.ai | Confidential Consultation";
+            font-family: 'Helvetica', sans-serif;
+            font-size: 9pt;
+            color: #666;
+        }
+    }
+
+    body {
+        font-family: 'Helvetica', 'Arial', sans-serif;
+        font-size: 11pt;
+        line-height: 1.5;
+        color: #1E293B;
+    }
+
+    /* Header Section */
+    .header {
+        border-bottom: 2px solid #2563EB;
+        padding-bottom: 15px;
+        margin-bottom: 30px;
+    }
+    .brand {
+        color: #2563EB;
+        font-size: 18pt;
+        font-weight: bold;
+        letter-spacing: -0.5px;
+    }
+    .meta {
+        color: #64748B;
+        font-size: 10pt;
+        margin-top: 5px;
+    }
+
+    /* Content Styling */
+    h1 {
+        color: #0F172A;
+        font-size: 16pt;
+        border-bottom: 1px solid #E2E8F0;
+        padding-bottom: 8px;
+        margin-top: 25px;
+        font-weight: bold;
+    }
+    h2 {
+        color: #1E40AF;
+        font-size: 13pt;
+        margin-top: 20px;
+        font-weight: bold;
+    }
+    h3 {
+        color: #0D9488;
+        font-size: 11pt;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-top: 15px;
+    }
+    
+    /* Table Styling - WeasyPrint handles borders beautifully */
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 20px 0;
+        font-size: 10pt;
+    }
+    th {
+        background-color: #F1F5F9;
+        color: #0F172A;
+        font-weight: bold;
+        padding: 10px;
+        border: 1px solid #CBD5E1;
+        text-align: left;
+    }
+    td {
+        padding: 8px 10px;
+        border: 1px solid #E2E8F0;
+    }
+    
+    /* Lists */
+    ul, ol { margin-bottom: 15px; padding-left: 25px; }
+    li { margin-bottom: 5px; }
+    
+    /* Code Blocks */
+    pre {
+        background: #F8FAFC;
+        padding: 10px;
+        border-radius: 5px;
+        border: 1px solid #E2E8F0;
+        font-family: 'Courier New', monospace;
+        font-size: 9pt;
+    }
+
+    /* Disclaimer Footer */
+    .disclaimer {
+        margin-top: 50px;
+        padding: 15px;
+        background-color: #FEF2F2;
+        border-left: 4px solid #EF4444;
+        color: #991B1B;
+        font-size: 9pt;
+        text-align: justify;
+    }
     """
 
-    # 3. Assemble the Full HTML
+    # 3. Assemble HTML
     full_html = f"""
     <!DOCTYPE html>
     <html>
     <head>
         <meta charset="utf-8">
-        {css_styles}
     </head>
     <body>
         <div class="header">
-            <div class="title">NGO CONSULTATION REPORT</div>
-            <div class="meta">Generated on: {current_date} • Regulatory Expert System v2.0</div>
+            <div class="brand">NGO GOVERNANCE AUDIT REPORT</div>
+            <div class="meta">Generated: {current_date} • Regulatory Framework: Nov 2025</div>
         </div>
 
         <div class="content">
-            {html_content}
+            {html_body}
         </div>
 
         <div class="disclaimer">
-            <strong>REGULATORY DISCLAIMER (NOV 2025):</strong><br>
-            This document is generated by an AI Expert System based on the regulatory framework as of November 18, 2025 
-            (including Income Tax Act 2025 and FCRA Amendments). It does not constitute legal counsel. 
-            Please verify all filing requirements with a practicing Chartered Accountant before submission.
+            <strong>REGULATORY DISCLAIMER:</strong><br>
+            This guidance is generated by an AI Expert System based on the Income Tax Act 2025 and FCRA May 2025 Amendments. 
+            It provides regulatory insights but does not constitute legal counsel. 
+            Please verify critical filing requirements with a practicing Chartered Accountant.
         </div>
     </body>
     </html>
@@ -150,20 +163,14 @@ def create_styled_pdf(markdown_content):
 
     # 4. Generate PDF
     pdf_buffer = BytesIO()
+    
+    # WeasyPrint Magic
     try:
-        # Create the PDF in the memory buffer
-        pisa_status = pisa.CreatePDF(
-            full_html, 
-            dest=pdf_buffer
+        HTML(string=full_html).write_pdf(
+            pdf_buffer, 
+            stylesheets=[CSS(string=css_string)]
         )
-        
-        # Check for errors
-        if pisa_status.err:
-            print(f"PDF Generation Error: {pisa_status.err}")
-            return None
-            
         return pdf_buffer.getvalue()
-        
     except Exception as e:
-        print(f"Critical PDF Crash: {e}")
+        print(f"WeasyPrint Generation Error: {e}")
         return None
